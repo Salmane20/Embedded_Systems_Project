@@ -70,4 +70,4 @@ This project implements an automated temperature monitoring system for industria
 This project is available for academic use only. All rights reserved © 2025 Salmane El Mansour Billah, Rania Terrab, Ziyad Boudhim.
 
 ## Acknowledgements
-We would like to thank our course instructor for guidance throughout this project. Special thanks to Particle.io for their robust IoT platform and documentation. This project was inspired by real-world applications of IoT technology in critical temperature monitoring environments.
+We would like to thank our course instructor Dr Ahmad Fiaz for guidance throughout this project. Special thanks to Particle.io for their robust IoT platform and documentation. This project was inspired by real-world applications of IoT technology in critical temperature monitoring environments.
