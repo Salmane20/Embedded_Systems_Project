@@ -65,6 +65,18 @@ The project now includes a dedicated `Integration` folder with components for cl
 
 The system now sends temperature, voltage, motor RPM, and alert status directly to ThingSpeak every 15 seconds, respecting the ThingSpeak free tier rate limits.
 
+## ThingSpeak API Integration
+
+The dashboard now integrates directly with ThingSpeak using the Read API Key "B9XCWXVC99VG7OL1" to display real-time temperature data. This integration provides several benefits:
+
+1. **Real-time data display** - The dashboard fetches the latest temperature readings directly from ThingSpeak every 15 seconds
+2. **Historical data access** - Up to 20 previous temperature readings are loaded when the dashboard initializes
+3. **Reliable cloud storage** - All sensor data is securely stored in ThingSpeak's cloud platform
+4. **Data persistence** - Temperature data remains available even when the local device is offline
+5. **Integration with other services** - The same ThingSpeak channel can be used with IFTTT, MATLAB, or other services
+
+The dashboard continues to provide a seamless user experience with progress indicators during data fetching and appropriate error handling with fallback to simulated data if ThingSpeak is temporarily unavailable.
+
 ## How to Use
 1. Power on the system and confirm the green status LED illuminates
 2. Access the web dashboard at your deployment URL

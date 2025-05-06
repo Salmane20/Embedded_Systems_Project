@@ -14,6 +14,37 @@ import {
   mockDeviceStatus
 } from '../utils/mockData';
 
+// ThingSpeak configuration
+const THINGSPEAK_API_KEY = 'B9XCWXVC99VG7OL1';
+const THINGSPEAK_READ_URL = `https://api.thingspeak.com/channels/2431893/feeds.json?api_key=${THINGSPEAK_API_KEY}&results=20`;
+const THINGSPEAK_LATEST_URL = `https://api.thingspeak.com/channels/2431893/feeds/last.json?api_key=${THINGSPEAK_API_KEY}`;
+
+interface ThingSpeakFeed {
+  created_at: string;
+  entry_id: number;
+  field1: string; // Temperature
+  field2: string; // Voltage
+  field3: string; // RPM
+  field4: string; // Alert status
+}
+
+interface ThingSpeakResponse {
+  channel: {
+    id: number;
+    name: string;
+    latitude: string;
+    longitude: string;
+    field1: string;
+    field2: string;
+    field3: string;
+    field4: string;
+    created_at: string;
+    updated_at: string;
+    last_entry_id: number;
+  };
+  feeds: ThingSpeakFeed[];
+}
+
 interface DashboardContextProps {
   temperatureData: TemperatureReading[];
   currentTemperature: TemperatureReading | null;
@@ -58,49 +89,52 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [heaterRPM, setHeaterRPM] = useState<number>(1000);
   const [showWarningPopup, setShowWarningPopup] = useState<boolean>(false);
   
-  // Refresh temperature data function (memoized with useCallback)
-  const refreshTemperature = useCallback(() => {
-    if (!isPhotonOn) return; // Don't update if Photon is off
-    
-    setIsLoading(true);
-    setRefreshProgress(0);
-    
-    // Simulate network delay
-    setTimeout(() => {
-      const newData = [...temperatureData];
-      
-      // Add a new reading with temperature between 19-24°C
-      // Adjust range if heater is active
-      let minTemp = 19;
-      let maxTemp = 24;
-      
-      if (isHeaterActive) {
-        // Heater increases temperature based on RPM
-        const heaterEffect = (heaterRPM / 2000); // 0.5 to 2.5 degrees increase
-        minTemp += heaterEffect;
-        maxTemp += heaterEffect;
-        
-        // Water sprayer cools down
-        if (isSprayerActive) {
-          minTemp -= 3;
-          maxTemp -= 3;
-        }
+  // Function to fetch data from ThingSpeak
+  const fetchThingSpeakData = useCallback(async (): Promise<TemperatureReading[]> => {
+    try {
+      const response = await fetch(THINGSPEAK_READ_URL);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
       
-      // Ensure temperature doesn't go below minimum threshold
-      minTemp = Math.max(minTemp, 17);
-      maxTemp = Math.max(maxTemp, minTemp + 2);
+      const data: ThingSpeakResponse = await response.json();
       
-      const randomValue = minTemp + (Math.random() * (maxTemp - minTemp));
-      const temperature = parseFloat(randomValue.toFixed(1));
-      
-      newData.push({
-        timestamp: Date.now(),
-        value: temperature,
-        unit: 'celsius'
+      // Convert ThingSpeak feeds to TemperatureReading format
+      const readings = data.feeds.map(feed => {
+        // Parse temperature from field1
+        const temperature = parseFloat(feed.field1);
+        
+        return {
+          timestamp: new Date(feed.created_at).getTime(),
+          value: temperature,
+          unit: 'celsius'
+        };
       });
       
-      setTemperatureData(newData);
+      // Filter out any invalid readings
+      return readings.filter(reading => !isNaN(reading.value));
+    } catch (error) {
+      console.error('Error fetching ThingSpeak data:', error);
+      return [];
+    }
+  }, []);
+  
+  // Function to fetch the latest temperature from ThingSpeak
+  const fetchLatestTemperature = useCallback(async (): Promise<TemperatureReading | null> => {
+    try {
+      const response = await fetch(THINGSPEAK_LATEST_URL);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      const feed: ThingSpeakFeed = await response.json();
+      
+      // Parse temperature from field1
+      const temperature = parseFloat(feed.field1);
+      
+      if (isNaN(temperature)) {
+        return null;
+      }
       
       // Check if temperature exceeds thresholds and create alert if needed
       if (temperature > 25 && !showWarningPopup && !isHeaterActive) {
@@ -135,32 +169,71 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         setAlerts(prev => [newAlert, ...prev]);
       }
       
-      setIsLoading(false);
-    }, 1500); // 1.5 second delay to simulate loading
-  }, [temperatureData, thresholdSettings, isPhotonOn, isHeaterActive, isSprayerActive, heaterRPM, showWarningPopup]);
+      return {
+        timestamp: new Date(feed.created_at).getTime(),
+        value: temperature,
+        unit: 'celsius'
+      };
+    } catch (error) {
+      console.error('Error fetching latest ThingSpeak data:', error);
+      return null;
+    }
+  }, [thresholdSettings, isHeaterActive, showWarningPopup]);
   
-  // Initialize with mock data
+  // Refresh temperature data function (memoized with useCallback)
+  const refreshTemperature = useCallback(() => {
+    if (!isPhotonOn) return; // Don't update if Photon is off
+    
+    setIsLoading(true);
+    setRefreshProgress(0);
+    
+    // Fetch the latest temperature from ThingSpeak
+    fetchLatestTemperature()
+      .then(reading => {
+        if (reading) {
+          setTemperatureData(prev => [...prev, reading]);
+        }
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error refreshing temperature:', error);
+        setIsLoading(false);
+      });
+  }, [fetchLatestTemperature, isPhotonOn]);
+  
+  // Initialize with ThingSpeak data
   useEffect(() => {
     setIsLoading(true);
     
-    // Simulate initial data loading
-    setTimeout(() => {
-      const data = generateTemperatureData('celsius');
-      setTemperatureData(data);
-      setIsLoading(false);
-      
-      // Simulate device status updates
-      const statusInterval = setInterval(() => {
-        setDeviceStatus(prev => ({
-          ...prev,
-          lastSeen: Date.now(),
-          batteryLevel: Math.max(prev.batteryLevel - 0.1, 0) // Slowly decrease battery
-        }));
-      }, 30000);
-      
-      return () => clearInterval(statusInterval);
-    }, 2000); // 2 second delay for initial loading
-  }, []);
+    // Fetch initial data from ThingSpeak
+    fetchThingSpeakData()
+      .then(data => {
+        if (data.length > 0) {
+          setTemperatureData(data);
+        } else {
+          // Fallback to mock data if no ThingSpeak data available
+          setTemperatureData(generateTemperatureData('celsius'));
+        }
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error initializing data:', error);
+        // Fallback to mock data on error
+        setTemperatureData(generateTemperatureData('celsius'));
+        setIsLoading(false);
+      });
+    
+    // Simulate device status updates
+    const statusInterval = setInterval(() => {
+      setDeviceStatus(prev => ({
+        ...prev,
+        lastSeen: Date.now(),
+        batteryLevel: Math.max(prev.batteryLevel - 0.1, 0) // Slowly decrease battery
+      }));
+    }, 30000);
+    
+    return () => clearInterval(statusInterval);
+  }, [fetchThingSpeakData]);
   
   // Set up automatic refresh every 15 seconds
   useEffect(() => {
