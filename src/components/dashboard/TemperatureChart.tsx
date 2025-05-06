@@ -10,7 +10,8 @@ const TemperatureChart: React.FC = () => {
     temperatureUnit, 
     timeRange, 
     changeTimeRange,
-    thresholdSettings 
+    thresholdSettings,
+    isLoading
   } = useDashboard();
   
   // Filter data based on time range
@@ -30,12 +31,12 @@ const TemperatureChart: React.FC = () => {
   // Calculate min and max values for chart scaling
   const minValue = useMemo(() => {
     if (!filteredData.length) return 0;
-    return Math.min(...filteredData.map(d => d.value)) - 5;
+    return Math.min(...filteredData.map(d => d.value)) - 2;
   }, [filteredData]);
   
   const maxValue = useMemo(() => {
     if (!filteredData.length) return 50;
-    return Math.max(...filteredData.map(d => d.value)) + 5;
+    return Math.max(...filteredData.map(d => d.value)) + 2;
   }, [filteredData]);
   
   // Calculate chart dimensions
@@ -87,6 +88,22 @@ const TemperatureChart: React.FC = () => {
     return labels;
   }, [filteredData, chartWidth, padding.left, padding.right]);
   
+  // Loading spinner component
+  const LoadingSpinner = () => (
+    <div className="h-full flex flex-col items-center justify-center text-gray-500">
+      <svg 
+        className="animate-spin mb-2 h-10 w-10" 
+        xmlns="http://www.w3.org/2000/svg" 
+        fill="none" 
+        viewBox="0 0 24 24"
+      >
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p>Loading temperature data...</p>
+    </div>
+  );
+  
   return (
     <Card 
       title="Temperature Trend" 
@@ -96,6 +113,7 @@ const TemperatureChart: React.FC = () => {
             size="sm" 
             variant={timeRange === '24h' ? 'primary' : 'secondary'}
             onClick={() => changeTimeRange('24h')}
+            disabled={isLoading}
           >
             24h
           </Button>
@@ -103,6 +121,7 @@ const TemperatureChart: React.FC = () => {
             size="sm"
             variant={timeRange === '7d' ? 'primary' : 'secondary'}
             onClick={() => changeTimeRange('7d')}
+            disabled={isLoading}
           >
             7d
           </Button>
@@ -110,7 +129,9 @@ const TemperatureChart: React.FC = () => {
       }
     >
       <div className="h-64 w-full">
-        {filteredData.length > 0 ? (
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : filteredData.length > 0 ? (
           <svg
             width="100%"
             height="100%"
@@ -240,15 +261,15 @@ const TemperatureChart: React.FC = () => {
                     fontSize="10"
                     fill="#6b7280"
                   >
-                    {value.toFixed(0) + (temperatureUnit === 'celsius' ? '°C' : '°F')}
+                    {value.toFixed(1) + '°C'}
                   </text>
                 </g>
               );
             })}
           </svg>
         ) : (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-gray-500">No temperature data available</p>
+          <div className="h-full flex items-center justify-center text-gray-500">
+            <p>No temperature data available</p>
           </div>
         )}
       </div>

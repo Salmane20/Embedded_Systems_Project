@@ -7,17 +7,22 @@ const ControlPanel: React.FC = () => {
   const { 
     refreshTemperature, 
     resetAlerts,
-    changeTemperatureUnit,
-    temperatureUnit
+    refreshProgress,
+    isLoading
   } = useDashboard();
+  
+  // Calculate seconds remaining
+  const secondsRemaining = Math.ceil(15 * (1 - refreshProgress / 100));
   
   return (
     <Card title="Control Panel">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Button
           onClick={refreshTemperature}
-          className="w-full"
+          className="w-full relative overflow-hidden"
+          disabled={isLoading}
         >
+          <div className="relative z-10 flex items-center justify-center">
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
             className="h-5 w-5 mr-2" 
@@ -33,6 +38,12 @@ const ControlPanel: React.FC = () => {
             />
           </svg>
           Refresh Data
+          </div>
+          {/* Progress bar overlay */}
+          <div 
+            className="absolute bottom-0 left-0 h-1 bg-white bg-opacity-30 transition-all duration-1000 ease-linear"
+            style={{ width: `${refreshProgress}%` }}
+          />
         </Button>
         
         <Button
@@ -56,28 +67,6 @@ const ControlPanel: React.FC = () => {
           </svg>
           Reset Alerts
         </Button>
-        
-        <Button
-          onClick={() => changeTemperatureUnit(temperatureUnit === 'celsius' ? 'fahrenheit' : 'celsius')}
-          variant="secondary"
-          className="w-full"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5 mr-2" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" 
-            />
-          </svg>
-          Toggle °C/°F
-        </Button>
       </div>
       
       <div className="mt-4 text-sm text-gray-500 border-t pt-3">
@@ -94,6 +83,14 @@ const ControlPanel: React.FC = () => {
           <li className="flex justify-between">
             <span>Last Maintenance:</span>
             <span className="font-medium">2025-01-15</span>
+          </li>
+          <li className="flex justify-between">
+            <span>Auto-refresh:</span>
+            <span className="font-medium">
+              <span className={secondsRemaining < 5 ? "text-blue-600 animate-pulse" : ""}>
+                {secondsRemaining}s remaining
+              </span>
+            </span>
           </li>
         </ul>
       </div>

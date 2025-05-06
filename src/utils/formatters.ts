@@ -16,9 +16,8 @@ export const formatTimestamp = (timestamp: number, format: 'short' | 'full' = 'f
 };
 
 // Format temperature with unit
-export const formatTemperature = (value: number, unit: 'celsius' | 'fahrenheit'): string => {
-  const symbol = unit === 'celsius' ? '°C' : '°F';
-  return `${value.toFixed(1)}${symbol}`;
+export const formatTemperature = (value: number, unit: 'celsius'): string => {
+  return `${value.toFixed(1)}°C`;
 };
 
 // Format time difference to "time ago" text

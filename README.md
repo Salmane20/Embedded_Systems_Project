@@ -17,11 +17,14 @@ This project implements an automated temperature monitoring system for industria
 - Comprehensive notifications log with alert history
 - Power management with battery backup for continuous operation
 - Automatic anomaly detection for temperature fluctuations
+- Direct ThingSpeak API integration for cloud data storage and visualization
+- Node-RED integration for advanced data processing and alerts
 
 ## Technologies Used
 - Photon 20 Microcontroller
 - TMP36 Temperature Sensor
 - Particle Cloud / ThingSpeak for data transmission
+- Node-RED for IoT workflow automation
 - React.js and TypeScript for web dashboard
 - Tailwind CSS for responsive UI design
 - LED indicators and LCD display for local feedback
@@ -38,7 +41,7 @@ This project implements an automated temperature monitoring system for industria
 ## Software Setup Instructions
 1. Create an account on Particle Cloud or ThingSpeak
 2. Flash the firmware to the Photon 20 using Particle Web IDE:
-   - Upload the TempSense.ino file
+   - Upload the `Integration/code.c` file
    - Insert your authentication tokens
    - Deploy the firmware
 3. Configure the web dashboard:
@@ -47,6 +50,20 @@ This project implements an automated temperature monitoring system for industria
    - Update API keys in `.env` file
    - Run `npm run build` to create production build
    - Deploy the dashboard to your hosting service
+4. Set up ThingSpeak and Node-RED integration:
+   - Follow the instructions in `Integration/ThingSpeak_Setup.md` to create your ThingSpeak channel
+   - Install Node-RED using the guide in `Integration/NodeRED_ThingSpeak_Integration.md`
+   - Import the Node-RED flow from `Integration/NodeRED_Flow.json`
+
+## Integration Details
+The project now includes a dedicated `Integration` folder with components for cloud connectivity:
+
+- **code.c**: Embedded C code for the Particle Photon with direct ThingSpeak API integration using API key "UU67E4LHWZTK10H4"
+- **NodeRED_ThingSpeak_Integration.md**: Comprehensive guide for setting up Node-RED to process data between Particle and ThingSpeak
+- **NodeRED_Flow.json**: Ready-to-import flow for Node-RED that processes temperature alerts and sends them to ThingSpeak
+- **ThingSpeak_Setup.md**: Step-by-step instructions for setting up ThingSpeak channels, visualizations, and alerts
+
+The system now sends temperature, voltage, motor RPM, and alert status directly to ThingSpeak every 15 seconds, respecting the ThingSpeak free tier rate limits.
 
 ## How to Use
 1. Power on the system and confirm the green status LED illuminates
@@ -58,6 +75,7 @@ This project implements an automated temperature monitoring system for industria
 7. Receive notifications when temperature exceeds thresholds
 8. Toggle between Celsius and Fahrenheit as needed
 9. Reset alerts or refresh data using the control panel
+10. Access your ThingSpeak channel to view additional visualizations and analytics
 
 ## Screenshots
 ![Dashboard Overview](dashboard.png)
@@ -66,8 +84,11 @@ This project implements an automated temperature monitoring system for industria
 ![Hardware Setup](hardware.png)
 *Hardware implementation with Photon 20, TMP36 sensor, and indicator LEDs*
 
+![System Architecture](system.png)
+*Proposed IoT-based temperature monitoring system architecture.*
+
 ## License
 This project is available for academic use only. All rights reserved © 2025 Salmane El Mansour Billah, Rania Terrab, Ziyad Boudhim.
 
 ## Acknowledgements
-We would like to thank our course instructor Dr Ahmad Fiaz for guidance throughout this project. Special thanks to Particle.io for their robust IoT platform and documentation. This project was inspired by real-world applications of IoT technology in critical temperature monitoring environments.
+We would like to thank our course instructor Dr Ahmad Fiaz for guidance throughout this project. Special thanks to Particle.io for their robust IoT platform and documentation, and to ThingSpeak for their IoT analytics platform. This project was inspired by real-world applications of IoT technology in critical temperature monitoring environments.

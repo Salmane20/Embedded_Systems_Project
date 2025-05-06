@@ -1,0 +1,253 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Particle to ThingSpeak",
+        "disabled": false,
+        "info": "Flow to connect Particle Photon temperature monitor to ThingSpeak"
+    },
+    {
+        "id": "a2377b38.1c3688",
+        "type": "particle-subscribe",
+        "z": "f6f2187d.f17ca8",
+        "name": "Temperature Alert",
+        "auth": "11a96ecd.1ef051",
+        "devid": "",
+        "evtname": "temp_alert",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "cc49ffd7.df71d"
+            ]
+        ]
+    },
+    {
+        "id": "cc49ffd7.df71d",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Parse Temperature",
+        "func": "// Extract temperature value from the payload\nconst message = msg.payload;\nconst tempMatch = message.match(/([\\d.]+)°C/);\n\nif (tempMatch && tempMatch[1]) {\n    const temperature = parseFloat(tempMatch[1]);\n    \n    // Create ThingSpeak message format\n    msg.payload = {\n        field1: temperature,\n        field4: 1 // Alert is active\n    };\n    \n    // Also create a notification message\n    const alertMsg = {payload: `High temperature alert: ${temperature}°C`};\n    \n    return [msg, alertMsg];\n}\n\nreturn null;",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 100,
+        "wires": [
+            [
+                "39b1c6e9.6a13ea"
+            ],
+            [
+                "b47a2b56.7c34a8"
+            ]
+        ]
+    },
+    {
+        "id": "d78c987e.2ee218",
+        "type": "particle-subscribe",
+        "z": "f6f2187d.f17ca8",
+        "name": "Voltage Alert",
+        "auth": "11a96ecd.1ef051",
+        "devid": "",
+        "evtname": "voltage_alert",
+        "x": 140,
+        "y": 180,
+        "wires": [
+            [
+                "5e96194f.a2e668"
+            ]
+        ]
+    },
+    {
+        "id": "5e96194f.a2e668",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Parse Voltage",
+        "func": "// Extract voltage value from the payload\nconst message = msg.payload;\nconst voltMatch = message.match(/([\\d.]+)V/);\n\nif (voltMatch && voltMatch[1]) {\n    const voltage = parseFloat(voltMatch[1]);\n    \n    // Create ThingSpeak message format\n    msg.payload = {\n        field2: voltage,\n        field4: 1 // Alert is active\n    };\n    \n    // Also create a notification message\n    const alertMsg = {payload: `High voltage alert: ${voltage}V`};\n    \n    return [msg, alertMsg];\n}\n\nreturn null;",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 180,
+        "wires": [
+            [
+                "39b1c6e9.6a13ea"
+            ],
+            [
+                "b47a2b56.7c34a8"
+            ]
+        ]
+    },
+    {
+        "id": "39b1c6e9.6a13ea",
+        "type": "thingspeak42",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send to ThingSpeak",
+        "delay": "15",
+        "dynamic_delay": false,
+        "server": "api.thingspeak.com",
+        "url": "/update",
+        "method": "POST",
+        "https": true,
+        "hostPort": "443",
+        "apiKey": "YOUR_THINGSPEAK_API_KEY",
+        "outputs": 1,
+        "x": 580,
+        "y": 140,
+        "wires": [
+            [
+                "e9c94be1.5407b8"
+            ]
+        ]
+    },
+    {
+        "id": "b47a2b56.7c34a8",
+        "type": "notification",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send Alert",
+        "platform": "email",
+        "to": "your-email@example.com",
+        "message": "",
+        "title": "IoT Temperature Monitor Alert",
+        "priority": "high",
+        "url": "",
+        "sound": "default",
+        "device": "",
+        "token": "",
+        "x": 560,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "e9c94be1.5407b8",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "ThingSpeak Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "4a3f3c44.7dbd44",
+        "type": "particle-get",
+        "z": "f6f2187d.f17ca8",
+        "name": "Get Particle Variables",
+        "auth": "11a96ecd.1ef051",
+        "devid": "",
+        "gettype": "variable",
+        "vname": "temperature",
+        "fnname": "",
+        "arg": "",
+        "x": 170,
+        "y": 320,
+        "wires": [
+            [
+                "70e3bf1b.e8a9f"
+            ]
+        ]
+    },
+    {
+        "id": "70e3bf1b.e8a9f",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Format Data",
+        "func": "// Process temperature data from Particle\nlet temperature = msg.payload.result;\n\n// Store in flow context for later use\nflow.set('temperature', temperature);\n\n// Get RPM from flow context if available\nlet rpm = flow.get('rpm') || 0;\n\n// Create ThingSpeak message format\nmsg.payload = {\n    field1: temperature,\n    field3: rpm,\n    field4: (temperature > 23.0) ? 1 : 0 // Set alert status\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 320,
+        "wires": [
+            [
+                "39b1c6e9.6a13ea"
+            ]
+        ]
+    },
+    {
+        "id": "33a5b3b6.6e6f5c",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "Poll Every 60s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "60",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "4a3f3c44.7dbd44",
+                "6d6cd34c.1d5ebc"
+            ]
+        ]
+    },
+    {
+        "id": "6d6cd34c.1d5ebc",
+        "type": "particle-get",
+        "z": "f6f2187d.f17ca8",
+        "name": "Get RPM",
+        "auth": "11a96ecd.1ef051",
+        "devid": "",
+        "gettype": "variable",
+        "vname": "rpm",
+        "fnname": "",
+        "arg": "",
+        "x": 340,
+        "y": 260,
+        "wires": [
+            [
+                "a8394e3d.f35be"
+            ]
+        ]
+    },
+    {
+        "id": "a8394e3d.f35be",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Store RPM",
+        "func": "// Store RPM value in flow context\nif (msg.payload && msg.payload.result !== undefined) {\n    flow.set('rpm', msg.payload.result);\n}\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "11a96ecd.1ef051",
+        "type": "particle-auth",
+        "z": "",
+        "name": "Particle Auth",
+        "accesstoken": "YOUR_PARTICLE_ACCESS_TOKEN"
+    }
+]

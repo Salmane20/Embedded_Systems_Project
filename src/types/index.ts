@@ -1,4 +1,4 @@
-export type TemperatureUnit = 'celsius' | 'fahrenheit';
+export type TemperatureUnit = 'celsius';
 
 export interface TemperatureReading {
   timestamp: number;

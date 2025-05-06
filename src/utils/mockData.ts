@@ -2,7 +2,7 @@ import { Alert, ConnectionStatus, DeviceStatus, TemperatureReading, ThresholdSet
 
 // Generate temperature readings for the past 7 days
 export const generateTemperatureData = (
-  unit: 'celsius' | 'fahrenheit',
+  unit: 'celsius',
   days = 7
 ): TemperatureReading[] => {
   const now = Date.now();
@@ -14,14 +14,15 @@ export const generateTemperatureData = (
     const dayStart = now - i * dayInMs;
     
     for (let j = 0; j < readingsPerDay; j++) {
-      // Base temperature around 22°C with some random variation
-      const baseTemp = unit === 'celsius' ? 22 : 71.6;
-      const randomVariation = (Math.random() * 10) - 5; // -5 to +5
+      // Base temperature around 21.5°C with random variation between 19°C and 24°C
+      const minTemp = 19;
+      const maxTemp = 24;
+      const randomValue = minTemp + (Math.random() * (maxTemp - minTemp));
       const timestamp = dayStart + (j * (dayInMs / readingsPerDay));
       
       data.push({
         timestamp,
-        value: parseFloat((baseTemp + randomVariation).toFixed(1)),
+        value: parseFloat(randomValue.toFixed(1)),
         unit
       });
     }
@@ -39,7 +40,7 @@ export const generateMockAlerts = (): Alert[] => {
     {
       id: '1',
       timestamp: now - (2 * hourInMs),
-      message: 'Temperature exceeded maximum threshold (30°C)',
+      message: 'Temperature exceeded maximum threshold (24°C)',
       type: 'critical',
       resolved: false
     },
@@ -60,7 +61,7 @@ export const generateMockAlerts = (): Alert[] => {
     {
       id: '4',
       timestamp: now - (24 * hourInMs),
-      message: 'Temperature below minimum threshold (10°C)',
+      message: 'Temperature below minimum threshold (19°C)',
       type: 'critical',
       resolved: true
     }
@@ -69,8 +70,8 @@ export const generateMockAlerts = (): Alert[] => {
 
 // Default threshold settings
 export const defaultThresholdSettings: ThresholdSettings = {
-  min: 15,
-  max: 30,
+  min: 19,
+  max: 24,
   unit: 'celsius'
 };
 
